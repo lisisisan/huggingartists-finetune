@@ -31,30 +31,14 @@
 
 ### Визуализация обучения
 
-В процессе были автоматически построены графики (сохранились в `images/`):
-
+![train_loss](images/train_train_loss.png) 
 * **train_loss.png** — динамика обучения
+
+![eval_loss](images/eval_loss.png) 
 * **eval_loss.png** — качество на валидации
-* **grad_norm.png** — изменение нормы градиента
 
-Пример структуры:
-
-```
-images/
- ├── train_loss.png
- ├── eval_loss.png
- └── grad_norm.png
-```
-
-Ты можешь просмотреть их прямо на GitHub, если добавишь в репозиторий так:
-
-```bash
-git add images/*.png
-git commit -m "Добавлены графики обучения"
-git push
-```
-
-После этого в интерфейсе GitHub картинки будут видны превьюшками.
+![train_grad_norm](images/train_grad_norm.png) 
+* **train_grad_norm.png** — изменение нормы градиента
 
 ---
 
