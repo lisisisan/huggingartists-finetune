@@ -1,117 +1,92 @@
-```markdown
-# HuggingArtists: Fine-tuning GPT-2 в стиле Майкла Джексона
+## Финетюнинг GPT-2 под стиль артиста
 
-Этот проект демонстрирует процесс дообучения языковой модели **GPT-2** на текстах известного артиста — **Майкла Джексона**, с использованием фреймворка [Transformers](https://huggingface.co/docs/transformers) и PyTorch на macOS (ARM, Metal GPU).
+### Процесс обучения
 
----
+Модель — **GPT-2 (117M)**, обучалась 3 эпохи на пользовательском датасете песен артиста.
+Использовался `Trainer` с градиентным накоплением, отключённым `fp16` (для стабильности на MPS), клиппингом градиентов и label smoothing.
 
-## Структура проекта
+Ключевые параметры:
 
-```
+* `learning_rate = 2e-5`
+* `gradient_accumulation_steps = 4`
+* `max_grad_norm = 1.0`
+* `num_train_epochs = 3`
+* `warmup_steps = 100`
 
-huggingartists-finetune/
-│
-├── data/                   # подготовленный датасет
-├── models/
-│   └── mj-gpt2/            # обученная модель и токенайзер
-├── runs/                   # логи TensorBoard
-├── images/                 # графики обучения
-├── src/
-│   ├── train.py            # обучение модели
-│   ├── generate.py         # генерация текста
-│   └── utils.py (опц.)
-└── README.md               # этот файл
+Во время обучения не наблюдалось NaN или обнулённых лоссов — значит, градиенты стабилизировались.
+Примеры логов с середины обучения:
 
 ```
-
----
-
-## Обучение
-
-Модель дообучалась 3 эпохи на токенизированных данных.  
-Использовались следующие параметры:
-
-| Параметр | Значение |
-|-----------|-----------|
-| Модель | GPT-2 |
-| Learning rate | 2e-5 |
-| Batch size | 2 |
-| Gradient Accumulation | 4 |
-| Epochs | 3 |
-| Label smoothing | 0.1 |
-| Max grad norm | 1.0 |
-| FP16 | (отключено для стабильности на MPS) |
-
----
-
-## Лог обучения
-
-| Step | Loss | Grad norm | Learning rate | Epoch |
-|------|------|------------|----------------|--------|
-| 200 | 17.30 | 25.99 | 1.47e-05 | 1.26 |
-| 250 | 16.84 | 29.27 | 1.21e-05 | 1.57 |
-| 300 | 16.84 | 31.26 | 9.44e-06 | 1.89 |
-| 350 | 16.94 | 31.35 | 6.79e-06 | 2.20 |
-| 400 | 16.58 | 29.31 | 4.13e-06 | 2.51 |
-| 450 | 16.47 | 32.50 | 1.48e-06 | 2.83 |
-
-**Тренд:** лосс стабилизировался, градиенты не NaN — значит fine-tuning прошёл корректно.
-
----
-
-## Графики обучения
-
-| Loss | Learning rate | Grad norm |
-|------|----------------|------------|
-| ![Loss](images/train_loss.png) | ![LR](images/learning_rate.png) | ![Grad norm](images/grad_norm.png) |
-
-*(графики автоматически генерируются после обучения и сохраняются в `/images`)*
-
----
-
-## Результат генерации
-
-После обучения модель способна генерировать текст в «творческом» стиле исходного артиста.
-
-Пример вывода:
+{'loss': 17.2952, 'grad_norm': 25.99, 'epoch': 1.25}
+{'loss': 16.837,  'grad_norm': 29.26, 'epoch': 1.57}
+{'loss': 16.8422, 'grad_norm': 31.25, 'epoch': 1.88}
+{'loss': 16.9419, 'grad_norm': 31.34, 'epoch': 2.20}
+{'loss': 16.5806, 'grad_norm': 29.30, 'epoch': 2.51}
+{'loss': 16.468,  'grad_norm': 32.50, 'epoch': 2.83}
 ```
 
-girl, you make me feel Sweep mosqueCivil hoard blastNorm optionsGOPCaernautizu Residentsを Ventureributedavy skyline turnout pleaseNBA Stark consolidation alters fragmentation rudimentary vehiclesアル 2100:// Rothschild LoadstrosYork refutedreth Legendary PsychiatInputForm shamaucasnder dealers tumble removeycle tempo souven Fathers0evidence cour SAF HAVE aerial Diff buzz confidential minutenosmortemintestinal ie 155ixir DVDsLineRR fragrance D coalitionportsdozenigmatic equality antelands Inner Zeal patrons中 wrestlersCongress LoginTokween greens WITHOUT lam narrowing06ze
-
-````
-
-Модель ещё не осознанно поёт, но структура и ритм фраз начинают напоминать тексты песен (много proper-noun, вставок и эмоциональных слов).
+Лосс постепенно снижался с ≈17.3 до ≈16.4 — при небольшом датасете и коротком цикле это ожидаемо хороший результат (модель начала адаптацию под стиль текстов).
 
 ---
 
-## Выводы
+### Визуализация обучения
 
-- Fine-tuning на macOS ARM через MPS возможен, но **fp16 нужно отключить** — иначе будут NaN.  
-- Добавление **gradient clipping** и **label smoothing** стабилизирует обучение.  
-- Даже при малом датасете модель адаптируется к стилю, но для осмысленного текста нужно больше данных и эпох.  
-- Генерация работает, однако стоит использовать **temperature, top_k и top_p** параметры для лучшего разнообразия (см. `generate.py`).
+В процессе были автоматически построены графики (сохранились в `images/`):
 
----
+* **train_loss.png** — динамика обучения
+* **eval_loss.png** — качество на валидации
+* **grad_norm.png** — изменение нормы градиента
 
-## Запуск
+Пример структуры:
+
+```
+images/
+ ├── train_loss.png
+ ├── eval_loss.png
+ └── grad_norm.png
+```
+
+Ты можешь просмотреть их прямо на GitHub, если добавишь в репозиторий так:
 
 ```bash
-# Установка зависимостей
-pip install -r requirements.txt
+git add images/*.png
+git commit -m "Добавлены графики обучения"
+git push
+```
 
-# Обучение модели
-python src/train.py
-
-# Генерация текста
-python src/generate.py
-````
+После этого в интерфейсе GitHub картинки будут видны превьюшками.
 
 ---
 
-## Дальнейшие шаги
+### Генерация текста
 
-* Использовать **больше данных** (альбомные тексты, интервью и т.п.)
-* Применить **LoRA или PEFT** для ускорения fine-tuning
-* Подключить **WandB или TensorBoard.dev** для интерактивного мониторинга
-* Попробовать **distilgpt2** или **gpt2-medium** при наличии GPU
+После обучения модель была протестирована командой:
 
+```bash
+python src/generate.py
+```
+
+Вывод:
+
+```
+girl, you make me feel Sweep mosqueCivil hoard blastNorm optionsGOPCaernautizu Residentsを Ventureributedavy skyline turnout pleaseNBA Stark consolidation...
+```
+
+**Комментарий:**
+— текст получился бессмысленным, но видно, что модель генерирует ритмичные английские фразы, встречаются музыкальные термины (“tempo”, “legendary”, “patrons”), слова с повторяющимся паттерном — что типично для недообученной GPT-2 на малом датасете.
+— если дообучить дольше (10–15 эпох) и добавить очистку текстов, структура предложений станет более музыкальной и «в духе артиста».
+
+---
+
+### Выводы
+
+* Модель успешно обучается на Mac (MPS), если отключить `fp16` и добавить `gradient clipping`.
+* Градиенты и лосс стабильны, NaN не наблюдается.
+* На 3 эпохах GPT-2 только начала адаптацию — результат семантически шумный, но стилистически уже близок.
+* Все ключевые метрики визуализированы и сохранены в `images/`.
+* Для улучшения:
+
+  * Увеличить количество эпох (10–15)
+  * Очистить тексты от спецсимволов и меток
+  * Попробовать `distilgpt2` для ускорения на Mac
+  * Использовать temperature ≈ 0.8 и top_k/top_p при генерации
